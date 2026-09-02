@@ -328,9 +328,6 @@ export function PhotoListingApp() {
                 {copy.hero_title} <span className="text-primary">{copy.hero_title_accent}</span>
               </h1>
               <p className="mt-5 max-w-lg text-base leading-7 text-muted-foreground sm:text-lg">{copy.hero_description}</p>
-              <div className="mt-7 flex items-center gap-3 text-sm font-medium text-muted-foreground">
-                <Sparkles className="size-4 text-primary" /> {copy.ai_note}
-              </div>
             </div>
 
             <div className="relative">
