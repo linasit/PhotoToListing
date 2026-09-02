@@ -4,7 +4,7 @@ import { CATEGORIES, CONDITIONS, type ListingDraft } from '@/lib/listings';
 export const runtime = 'edge';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const SYSTEM_PROMPT = `Esi profesionalus Lietuvos naudotų daiktų skelbimų redaktorius ir vaizdų analizės specialistas.
 Iš vienos nuotraukos atpažink PAGRINDINĘ parduodamą prekę ir parenk skelbimo juodraštį.
@@ -44,6 +44,30 @@ const schema = {
   },
   required: ['title', 'description', 'category', 'condition', 'suggested_price', 'price_reasoning', 'confidence'],
 };
+
+const proofreadSchema = {
+  type: 'object',
+  additionalProperties: false,
+  properties: {
+    title: { type: 'string' },
+    description: { type: 'string' },
+    price_reasoning: { type: 'string' },
+  },
+  required: ['title', 'description', 'price_reasoning'],
+};
+
+const PROOFREAD_PROMPT = `Esi itin atidus profesionalus lietuvių kalbos redaktorius.
+Taisyk tik pateikto skelbimo pavadinimo, aprašymo ir kainos paaiškinimo kalbą.
+
+- Ištaisyk visas rašybos, gramatikos, linksniavimo, derinimo, skyrybos ir stiliaus klaidas.
+- Išlaikyk tą pačią atpažintą prekę ir visas faktines detales. Nepridėk naujų savybių, matmenų, prekės ženklo ar modelio.
+- Pavadinimas turi būti natūrali lietuviška daiktavardinė frazė vardininko linksniu, be taško pabaigoje.
+- Aprašymas turi būti 2–4 aiškūs, natūralūs ir tarpusavyje derantys sakiniai.
+- Kainos paaiškinimas turi būti vienas trumpas, taisyklingas sakinys.
+- Nevartok angliškų sakinių, maišytos kalbos, žymų, kabučių aplink visą tekstą ar „Markdown“.
+- Prekių ženklų ir modelių pavadinimų neversk ir netaisyk kaip bendrinių žodžių.
+
+Prieš pateikdamas atsakymą, tyliai perskaityk kiekvieną lauką dar kartą.`;
 
 function encodeBase64(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer);
@@ -105,6 +129,16 @@ function isValidDraft(value: unknown): value is ListingDraft {
   );
 }
 
+function normalizeDraft(draft: ListingDraft): ListingDraft {
+  return {
+    ...draft,
+    title: draft.title.trim().replace(/\s+/g, ' ').replace(/[.!?]+$/, ''),
+    description: draft.description.trim().replace(/\s+/g, ' '),
+    price_reasoning: draft.price_reasoning.trim().replace(/\s+/g, ' '),
+    suggested_price: Math.round(draft.suggested_price * 100) / 100,
+  };
+}
+
 async function requestDraft(file: File, attempt: number): Promise<ListingDraft> {
   const dataUrl = `data:${file.type};base64,${encodeBase64(await file.arrayBuffer())}`;
   const controller = new AbortController();
@@ -136,6 +170,7 @@ async function requestDraft(file: File, attempt: number): Promise<ListingDraft> 
         ],
         text: { format: { type: 'json_schema', name: 'listing_draft', strict: true, schema } },
         max_output_tokens: 900,
+        temperature: 0.2,
         store: false,
       }),
       signal: controller.signal,
@@ -144,7 +179,48 @@ async function requestDraft(file: File, attempt: number): Promise<ListingDraft> 
     const payload = (await response.json()) as Record<string, unknown>;
     const draft = JSON.parse(extractOutputText(payload)) as unknown;
     if (!isValidDraft(draft)) throw new Error('Invalid listing draft');
-    return draft;
+    return normalizeDraft(draft);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function proofreadDraft(draft: ListingDraft): Promise<ListingDraft> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 18_000);
+  try {
+    const response = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        instructions: PROOFREAD_PROMPT,
+        input: JSON.stringify({
+          title: draft.title,
+          description: draft.description,
+          price_reasoning: draft.price_reasoning,
+        }),
+        text: { format: { type: 'json_schema', name: 'proofread_listing_copy', strict: true, schema: proofreadSchema } },
+        max_output_tokens: 600,
+        temperature: 0.1,
+        store: false,
+      }),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`OpenAI proofreading response ${response.status}`);
+    const payload = (await response.json()) as Record<string, unknown>;
+    const polished = JSON.parse(extractOutputText(payload)) as Partial<ListingDraft>;
+    const result = normalizeDraft({
+      ...draft,
+      title: polished.title ?? '',
+      description: polished.description ?? '',
+      price_reasoning: polished.price_reasoning ?? '',
+    });
+    if (!isValidDraft(result)) throw new Error('Invalid proofread listing draft');
+    return result;
   } finally {
     clearTimeout(timeout);
   }
@@ -168,11 +244,22 @@ export async function POST(request: Request) {
       );
     }
 
+    let recognizedDraft: ListingDraft | null = null;
     for (let attempt = 0; attempt < 2; attempt += 1) {
       try {
-        return Response.json(await requestDraft(file, attempt));
+        recognizedDraft = await requestDraft(file, attempt);
+        break;
       } catch (error) {
         if (attempt === 1) console.error('Image analysis failed', error);
+      }
+    }
+
+    if (recognizedDraft) {
+      try {
+        return Response.json(await proofreadDraft(recognizedDraft));
+      } catch (error) {
+        console.error('Lithuanian proofreading failed', error);
+        return Response.json(recognizedDraft);
       }
     }
 

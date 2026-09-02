@@ -73,31 +73,66 @@ const SAMPLE_LISTINGS: Listing[] = [
 
 const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
+const imageTypesByExtension: Record<string, string> = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+  heic: 'image/heic',
+  heif: 'image/heif',
+};
+
 function normalizeFile(file: File) {
-  if (file.type) return file;
   const extension = file.name.split('.').pop()?.toLowerCase();
-  const type = extension === 'heic' ? 'image/heic' : extension === 'heif' ? 'image/heif' : '';
-  return type ? new File([file], file.name, { type }) : file;
+  const inferredType = extension ? imageTypesByExtension[extension] : undefined;
+  const type = file.type === 'image/jpg' || /image\/(?:heic|heif)/i.test(file.type) ? inferredType : file.type || inferredType;
+  return type && type !== file.type ? new File([file], file.name, { type }) : file;
 }
 
-async function resizeImage(file: File) {
+function isHeicFile(file: File) {
+  return /image\/(?:heic|heif)/i.test(file.type) || /\.(?:heic|heif)$/i.test(file.name);
+}
+
+async function prepareImage(file: File) {
+  let compatibleFile = file;
+  if (isHeicFile(file)) {
+    try {
+      const { default: heic2any } = await import('heic2any');
+      const converted = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 });
+      const blob = Array.isArray(converted) ? converted[0] : converted;
+      if (!(blob instanceof Blob)) throw new Error('Invalid converted image');
+      compatibleFile = new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.jpg`, { type: 'image/jpeg' });
+    } catch {
+      throw new Error(copy.error_image_conversion);
+    }
+  }
+
   try {
-    const bitmap = await createImageBitmap(file);
-    const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
-    if (scale === 1) return file;
+    const bitmap = await createImageBitmap(compatibleFile);
+    const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1) {
+      bitmap.close();
+      return compatibleFile;
+    }
     const canvas = document.createElement('canvas');
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(bitmap.height * scale);
     const context = canvas.getContext('2d');
-    if (!context) return file;
+    if (!context) {
+      bitmap.close();
+      return compatibleFile;
+    }
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     bitmap.close();
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.86));
-    return blob ? new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.jpg`, { type: 'image/jpeg' }) : file;
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.9));
+    return blob
+      ? new File([blob], `${compatibleFile.name.replace(/\.[^.]+$/, '')}.jpg`, { type: 'image/jpeg' })
+      : compatibleFile;
   } catch {
-    return file;
+    if (isHeicFile(file)) throw new Error(copy.error_image_conversion);
+    return compatibleFile;
   }
 }
 
@@ -173,14 +208,14 @@ export function PhotoListingApp() {
     setStage('analyzing');
     setDraft(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    const resized = await resizeImage(normalized);
-    setFile(resized);
-
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 45_000);
+    const timeout = window.setTimeout(() => controller.abort(), 60_000);
     try {
+      const prepared = await prepareImage(normalized);
+      setFile(prepared);
+      if (prepared !== normalized) setPreviewUrl(URL.createObjectURL(prepared));
       const body = new FormData();
-      body.append('image', resized);
+      body.append('image', prepared);
       const response = await fetch('/api/analyze', { method: 'POST', body, signal: controller.signal });
       if (!response.ok) {
         const payload = (await response.json().catch(() => ({}))) as AnalysisError;
