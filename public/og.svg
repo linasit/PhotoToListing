@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#f3f0e8"/>
+  <circle cx="1100" cy="92" r="210" fill="#f3cb55" opacity="0.72"/>
+  <rect x="765" y="165" width="320" height="350" rx="42" fill="#fffdf8" stroke="#d8d3c7" stroke-width="4" transform="rotate(5 925 340)"/>
+  <rect x="820" y="225" width="210" height="168" rx="24" fill="#20241d" opacity="0.10" transform="rotate(5 925 340)"/>
+  <rect x="810" y="430" width="160" height="18" rx="9" fill="#d63f1e" opacity="0.85" transform="rotate(5 925 340)"/>
+  <rect x="810" y="466" width="220" height="12" rx="6" fill="#20241d" opacity="0.22" transform="rotate(5 925 340)"/>
+  <circle cx="92" cy="92" r="32" fill="#d63f1e"/>
+  <text x="142" y="105" fill="#20241d" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Nuotrauka į skelbimą</text>
+  <text x="80" y="282" fill="#20241d" font-family="Arial, Helvetica, sans-serif" font-size="78" font-weight="800" letter-spacing="-4">Nufotografuokite.</text>
+  <text x="80" y="370" fill="#d63f1e" font-family="Arial, Helvetica, sans-serif" font-size="78" font-weight="800" letter-spacing="-4">Parduokite.</text>
+  <text x="84" y="440" fill="#68685f" font-family="Arial, Helvetica, sans-serif" font-size="29">Lietuviškas skelbimas per kelias sekundes.</text>
+</svg>
