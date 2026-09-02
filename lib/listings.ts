@@ -42,8 +42,9 @@ export function formatPrice(price: number) {
   return new Intl.NumberFormat('lt-LT', { style: 'currency', currency: 'EUR' }).format(price);
 }
 
-export function relativeTime(dateString: string) {
-  const elapsed = Date.now() - new Date(dateString).getTime();
+export function relativeTime(dateString: string, now?: number) {
+  if (now === undefined) return dateString.slice(0, 10);
+  const elapsed = now - new Date(dateString).getTime();
   const minutes = Math.max(0, Math.floor(elapsed / 60_000));
   if (minutes < 1) return 'ką tik';
   if (minutes < 60) return `prieš ${minutes} min.`;

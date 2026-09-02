@@ -113,6 +113,7 @@ export function PhotoListingApp() {
   const [activeCategory, setActiveCategory] = useState<'Visi' | Category>('Visi');
   const [isDragActive, setIsDragActive] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [currentTime, setCurrentTime] = useState<number | null>(null);
   const [message, setMessage] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -120,6 +121,12 @@ export function PhotoListingApp() {
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((payload) => setPublished((payload as { listings?: Listing[] }).listings ?? []))
       .catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    setCurrentTime(Date.now());
+    const interval = window.setInterval(() => setCurrentTime(Date.now()), 60_000);
+    return () => window.clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -341,7 +348,7 @@ export function PhotoListingApp() {
                       <div className="p-5">
                         <div className="mb-3 flex items-center justify-between gap-3">
                           <Badge variant="secondary" className="bg-[#e5efdc] text-[#285d36]">{listing.category}</Badge>
-                          <span className="text-xs text-muted-foreground">{relativeTime(listing.createdAt)}</span>
+                          <span className="text-xs text-muted-foreground">{relativeTime(listing.createdAt, currentTime ?? undefined)}</span>
                         </div>
                         <h3 className="line-clamp-2 min-h-[3rem] text-lg font-bold leading-6 tracking-[-0.025em]">{listing.title}</h3>
                         <p className="mt-3 text-2xl font-[760] tracking-[-0.04em]">{formatPrice(listing.price)}</p>
@@ -447,7 +454,7 @@ export function PhotoListingApp() {
               <div className="my-7 h-px bg-border" />
               <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">{copy.detail_description}</h2>
               <p className="mt-3 text-base leading-7 text-foreground/85">{selectedListing.description}</p>
-              <div className="mt-auto pt-8 text-sm text-muted-foreground">{copy.listed} · {relativeTime(selectedListing.createdAt)}</div>
+              <div className="mt-auto pt-8 text-sm text-muted-foreground">{copy.listed} · {relativeTime(selectedListing.createdAt, currentTime ?? undefined)}</div>
             </div>
           </article>
         </section>
