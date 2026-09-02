@@ -6,22 +6,39 @@ export const runtime = 'edge';
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
-const SYSTEM_PROMPT = `You are a marketplace listing assistant for a Lithuanian marketplace.
-Analyze the item in the photo and generate a listing.
+const SYSTEM_PROMPT = `Esi profesionalus Lietuvos naudotų daiktų skelbimų redaktorius ir vaizdų analizės specialistas.
+Iš vienos nuotraukos atpažink PAGRINDINĘ parduodamą prekę ir parenk skelbimo juodraštį.
 
-CRITICAL: All text values (title, description, price_reasoning) MUST be written in natural, grammatically correct Lithuanian — proper declensions, correct diacritics (ą, č, ę, ė, į, š, ų, ū, ž), and fluent phrasing. Do NOT use machine-translated or awkward Lithuanian.
+Atpažinimo taisyklės:
+- Vertink pačią nuotrauką, o ne failo pavadinimą. Nekreipk dėmesio į foną, stalą, grindis, pakuotę ar žmogų, jeigu tai nėra parduodama prekė.
+- Nurodyk konkretų daikto tipą. Nevartok bendrinių pakaitalų „daiktas“, „prekė“ ar „gaminys“, jeigu objektą galima atpažinti konkrečiau.
+- Gamintoją, modelį, medžiagą, matmenis, talpą ar technines savybes minėk tik tada, kai tai aiškiai matoma nuotraukoje. Nieko neišgalvok.
+- Iš nuotraukos negalima patvirtinti, kad elektronika veikia, todėl to neteik kaip fakto.
 
-The title must be specific and searchable, at most 70 characters. The description must be 2–4 sentences that explain what the item is, its visible condition, and notable features. If the image does not clearly show a sellable item, use low confidence and make your best guess. Never refuse.`;
+Laukų taisyklės:
+- title: konkretus, paieškai tinkamas lietuviškas pavadinimas iki 70 simbolių. Rašyk natūralia vardininko forma, be kainos, būklės ir reklaminio šūkio.
+- description: 2–4 pilni, sklandūs sakiniai. Tiksliai įvardyk prekę, aprašyk matomas savybes ir būklę, o neaiškius dalykus suformuluok atsargiai.
+- category: pasirink tik vieną pateiktą kategoriją, labiausiai tinkančią pagrindinei prekei.
+- condition: spręsk tik pagal matomą kosmetinę būklę. Jei nuotraukos nepakanka, rinkis atsargesnį įvertinimą.
+- suggested_price: realistiška naudoto daikto pardavimo kaina eurais kaip teigiamas skaičius. Neįtrauk valiutos ženklo.
+- price_reasoning: vienas trumpas sakinys taisyklinga lietuvių kalba, paaiškinantis kainą pagal prekės tipą ir matomą būklę.
+- confidence: atpažinimo patikimumas. Jei pagrindinė prekė neaiški, rinkis low, bet vis tiek pateik konkretų geriausią spėjimą.
+
+Kalbos kokybė:
+- Visi tekstiniai LAUKŲ DUOMENYS turi būti parašyti tik taisyklinga, natūralia lietuvių kalba.
+- Vartok reikiamus lietuviškus diakritinius ženklus, taisyklingus linksnius, skyrybą ir didžiąsias raides.
+- Nevartok angliškų sakinių, maišytos kalbos, žymų, „Markdown“ ar laukų pavadinimų pačiuose tekstuose.
+- Prieš pateikdamas JSON, tyliai dar kartą patikrink prekės atpažinimą, rašybą ir gramatiką.`;
 
 const schema = {
   type: 'object',
   additionalProperties: false,
   properties: {
-    title: { type: 'string', maxLength: 70 },
-    description: { type: 'string', maxLength: 1000 },
+    title: { type: 'string' },
+    description: { type: 'string' },
     category: { type: 'string', enum: CATEGORIES },
     condition: { type: 'string', enum: CONDITIONS },
-    suggested_price: { type: 'number', exclusiveMinimum: 0 },
+    suggested_price: { type: 'number' },
     price_reasoning: { type: 'string' },
     confidence: { type: 'string', enum: ['low', 'medium', 'high'] },
   },
@@ -57,20 +74,34 @@ function extractOutputText(payload: Record<string, unknown>) {
 function isValidDraft(value: unknown): value is ListingDraft {
   if (!value || typeof value !== 'object') return false;
   const draft = value as Partial<ListingDraft>;
-  const hasLithuanian = /[ąčęėįšųūž]/i.test(`${draft.title ?? ''} ${draft.description ?? ''} ${draft.price_reasoning ?? ''}`);
+  const combinedText = `${draft.title ?? ''} ${draft.description ?? ''} ${draft.price_reasoning ?? ''}`;
+  const hasLithuanian = /[ąčęėįšųūž]/i.test(combinedText);
+  const sentenceCount = (draft.description?.match(/[.!?](?:\s|$)/g) ?? []).length;
+  const hasGenericTitle = /^(?:tvarkingas|geras|naudotas|parduodamas)?\s*(?:daiktas|prekė|gaminys)$/i.test(
+    draft.title?.trim() ?? '',
+  );
+  const hasFieldLabels = /(?:^|\s)(?:title|description|category|condition|price)\s*:/i.test(combinedText);
   return (
     typeof draft.title === 'string' &&
-    draft.title.length > 0 &&
-    draft.title.length <= 70 &&
+    draft.title.trim().length >= 3 &&
+    draft.title.trim().length <= 70 &&
+    !hasGenericTitle &&
     typeof draft.description === 'string' &&
-    draft.description.length > 0 &&
+    draft.description.trim().length >= 40 &&
+    draft.description.trim().length <= 1000 &&
+    sentenceCount >= 2 &&
     CATEGORIES.includes(draft.category as (typeof CATEGORIES)[number]) &&
     CONDITIONS.includes(draft.condition as (typeof CONDITIONS)[number]) &&
     typeof draft.suggested_price === 'number' &&
+    Number.isFinite(draft.suggested_price) &&
     draft.suggested_price > 0 &&
+    draft.suggested_price <= 1_000_000 &&
     typeof draft.price_reasoning === 'string' &&
+    draft.price_reasoning.trim().length >= 10 &&
+    draft.price_reasoning.trim().length <= 280 &&
     ['low', 'medium', 'high'].includes(draft.confidence ?? '') &&
-    hasLithuanian
+    hasLithuanian &&
+    !hasFieldLabels
   );
 }
 
@@ -96,15 +127,15 @@ async function requestDraft(file: File, attempt: number): Promise<ListingDraft> 
                 type: 'input_text',
                 text:
                   attempt === 0
-                    ? 'Išanalizuok nuotrauką ir parenk lietuvišką skelbimą.'
-                    : 'Pakartok analizę. Ypač atidžiai patikrink taisyklingą lietuvių kalbą ir diakritinius ženklus.',
+                    ? 'Atidžiai apžiūrėk nuotrauką, atpažink pagrindinę parduodamą prekę ir užpildyk visus skelbimo laukus.'
+                    : 'Analizuok iš naujo. Pateik konkretų prekės pavadinimą ir prieš atsakydamas ypač atidžiai ištaisyk visas lietuvių kalbos klaidas.',
               },
-              { type: 'input_image', image_url: dataUrl, detail: 'low' },
+              { type: 'input_image', image_url: dataUrl, detail: 'high' },
             ],
           },
         ],
         text: { format: { type: 'json_schema', name: 'listing_draft', strict: true, schema } },
-        max_output_tokens: 700,
+        max_output_tokens: 900,
         store: false,
       }),
       signal: controller.signal,
@@ -119,30 +150,6 @@ async function requestDraft(file: File, attempt: number): Promise<ListingDraft> 
   }
 }
 
-function fallbackDraft(filename: string): ListingDraft {
-  const normalized = filename.toLocaleLowerCase('lt-LT');
-  if (/foto|camera|polaroid|aparatas/.test(normalized)) {
-    return {
-      title: 'Vintažinis momentinis fotoaparatas',
-      description: 'Klasikinis momentinis fotoaparatas, išoriškai geros būklės. Korpusas turi nežymių naudojimo žymių, todėl prieš perkant rekomenduojama patikrinti veikimą. Puikus pasirinkimas analoginės fotografijos mėgėjams.',
-      category: 'Elektronika',
-      condition: 'Geras',
-      suggested_price: 45,
-      price_reasoning: 'Panašūs naudoti momentiniai fotoaparatai dažniausiai kainuoja apie 35–60 €.',
-      confidence: 'medium',
-    };
-  }
-  return {
-    title: 'Tvarkingas naudotas daiktas',
-    description: 'Nuotraukoje matomas tvarkingas naudotas daiktas, tinkamas tolesniam naudojimui. Matyti nedidelių įprasto dėvėjimosi žymių, tačiau bendra būklė atrodo gera. Prieš skelbiant rekomenduojama patikslinti matmenis ir komplektaciją.',
-    category: 'Kita',
-    condition: 'Geras',
-    suggested_price: 25,
-    price_reasoning: 'Siūloma kaina atitinka panašių geros būklės naudotų daiktų vertę.',
-    confidence: 'low',
-  };
-}
-
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
@@ -151,17 +158,31 @@ export async function POST(request: Request) {
     if (file.size > MAX_FILE_SIZE) return Response.json({ error: 'Failas per didelis.' }, { status: 413 });
     if (!ALLOWED_TYPES.includes(file.type)) return Response.json({ error: 'Nepalaikomas failo formatas.' }, { status: 415 });
 
-    if (env.OPENAI_API_KEY) {
-      for (let attempt = 0; attempt < 2; attempt += 1) {
-        try {
-          return Response.json(await requestDraft(file, attempt));
-        } catch (error) {
-          if (attempt === 1) console.error('Image analysis failed', error);
-        }
+    if (!env.OPENAI_API_KEY) {
+      return Response.json(
+        {
+          code: 'AI_NOT_CONFIGURED',
+          error: 'DI vaizdų atpažinimas dar neprijungtas. Pridėkite OpenAI API raktą ir bandykite dar kartą.',
+        },
+        { status: 503 },
+      );
+    }
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        return Response.json(await requestDraft(file, attempt));
+      } catch (error) {
+        if (attempt === 1) console.error('Image analysis failed', error);
       }
     }
 
-    return Response.json(fallbackDraft(file.name));
+    return Response.json(
+      {
+        code: 'AI_ANALYSIS_FAILED',
+        error: 'Nepavyko patikimai atpažinti prekės. Pabandykite įkelti aiškesnę nuotrauką.',
+      },
+      { status: 502 },
+    );
   } catch (error) {
     console.error('Analyze route failed', error);
     return Response.json({ error: 'Įvyko klaida. Bandykite dar kartą.' }, { status: 500 });

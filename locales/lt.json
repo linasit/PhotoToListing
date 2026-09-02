@@ -42,6 +42,8 @@
   "listed": "Paskelbta",
   "low_confidence_warning": "Nesame tikri dėl šio daikto — patikrinkite informaciją.",
   "error_generic": "Įvyko klaida. Bandykite dar kartą.",
+  "error_analysis": "Nepavyko atpažinti prekės. Pabandykite dar kartą.",
+  "error_analysis_timeout": "Prekės atpažinimas užtruko per ilgai. Pabandykite dar kartą.",
   "error_file_too_large": "Failas per didelis (daugiausia 10 MB).",
   "error_file_type": "Nepalaikomas failo formatas.",
   "error_title": "Įrašykite pavadinimą (iki 70 simbolių).",

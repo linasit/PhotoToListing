@@ -36,6 +36,7 @@ import {
 
 type Stage = 'home' | 'analyzing' | 'edit' | 'detail';
 type EditableDraft = Omit<ListingDraft, 'suggested_price'> & { price: string };
+type AnalysisError = { error?: string };
 
 const SAMPLE_LISTINGS: Listing[] = [
   {
@@ -80,7 +81,6 @@ function normalizeFile(file: File) {
 }
 
 async function resizeImage(file: File) {
-  if (file.type === 'image/heic' || file.type === 'image/heif') return file;
   try {
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
@@ -177,12 +177,15 @@ export function PhotoListingApp() {
     setFile(resized);
 
     const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 30_000);
+    const timeout = window.setTimeout(() => controller.abort(), 45_000);
     try {
       const body = new FormData();
       body.append('image', resized);
       const response = await fetch('/api/analyze', { method: 'POST', body, signal: controller.signal });
-      if (!response.ok) throw new Error('analysis failed');
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => ({}))) as AnalysisError;
+        throw new Error(payload.error || copy.error_analysis);
+      }
       const result = (await response.json()) as ListingDraft;
       setDraft(result);
       setForm({
@@ -195,9 +198,9 @@ export function PhotoListingApp() {
         confidence: result.confidence,
       });
       setStage('edit');
-    } catch {
+    } catch (error) {
       setStage('home');
-      showMessage('error', copy.error_generic);
+      showMessage('error', error instanceof Error && error.name !== 'AbortError' ? error.message : copy.error_analysis_timeout);
     } finally {
       window.clearTimeout(timeout);
     }
