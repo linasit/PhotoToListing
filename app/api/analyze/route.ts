@@ -27,6 +27,7 @@ Laukų taisyklės:
 Kalbos kokybė:
 - Visi tekstiniai LAUKŲ DUOMENYS turi būti parašyti tik taisyklinga, natūralia lietuvių kalba.
 - Vartok reikiamus lietuviškus diakritinius ženklus, taisyklingus linksnius, skyrybą ir didžiąsias raides.
+- Venk pažodinių vertinių, anglicizmų, dirbtinių konstrukcijų ir reklaminių klišių. Matomą dėvėjimą vadink „naudojimo žymėmis“, „nusidėvėjimu“ arba konkrečiais matomais pažeidimais, o ne „naudojimo ženklais“.
 - Nevartok angliškų sakinių, maišytos kalbos, žymų, „Markdown“ ar laukų pavadinimų pačiuose tekstuose.
 - Prieš pateikdamas JSON, tyliai dar kartą patikrink prekės atpažinimą, rašybą ir gramatiką.`;
 
@@ -64,6 +65,8 @@ Taisyk tik pateikto skelbimo pavadinimo, aprašymo ir kainos paaiškinimo kalbą
 - Pavadinimas turi būti natūrali lietuviška daiktavardinė frazė vardininko linksniu, be taško pabaigoje.
 - Aprašymas turi būti 2–4 aiškūs, natūralūs ir tarpusavyje derantys sakiniai.
 - Kainos paaiškinimas turi būti vienas trumpas, taisyklingas sakinys.
+- Pašalink pažodinius vertinius, anglicizmus, nereikalingą reklaminį toną ir nenatūralias konstrukcijas. Dėvėjimą vadink „naudojimo žymėmis“, „nusidėvėjimu“ arba konkrečiais matomais pažeidimais, o ne „naudojimo ženklais“.
+- Neteik kaip fakto prekės veikimo, patogumo ar tinkamumo konkrečiai paskirčiai, jeigu to negalima patvirtinti iš nuotraukos.
 - Nevartok angliškų sakinių, maišytos kalbos, žymų, kabučių aplink visą tekstą ar „Markdown“.
 - Prekių ženklų ir modelių pavadinimų neversk ir netaisyk kaip bendrinių žodžių.
 
