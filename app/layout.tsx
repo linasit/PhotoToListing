@@ -5,6 +5,7 @@ import './globals.css';
 const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://nuotrauka-i-skelbima.linasitgroup.chatgpt.site'),
   title: 'Nuotrauka į skelbimą',
   description: 'Paverskite daikto nuotrauką paruoštu lietuvišku skelbimu per kelias sekundes.',
   openGraph: {
