@@ -42,8 +42,8 @@ const SAMPLE_LISTINGS: Listing[] = [
   {
     id: 'sample-camera',
     imageUrl: '/demo-camera.jpg',
-    title: 'Vintažinis momentinis fotoaparatas',
-    description: 'Klasikinis momentinis fotoaparatas, išoriškai geros būklės. Korpusas turi nedidelių kosmetinių nusidėvėjimo žymių. Puikus pasirinkimas analoginės fotografijos mėgėjams.',
+    title: 'Naudotas vintažinis momentinis fotoaparatas',
+    description: 'Klasikinio dizaino momentinis fotoaparatas. Ant korpuso matyti nedidelių naudojimo žymių, tačiau išoriškai jis atrodo geros būklės. Prieš perkant rekomenduojama patikrinti veikimą ir komplektaciją.',
     category: 'Elektronika',
     condition: 'Geras',
     price: 45,
@@ -52,8 +52,8 @@ const SAMPLE_LISTINGS: Listing[] = [
   {
     id: 'sample-chair',
     imageUrl: '/demo-chair.jpg',
-    title: 'Ąžuolinė valgomojo kėdė',
-    description: 'Tvirta natūralaus medžio valgomojo kėdė. Mediena prižiūrėta, konstrukcija stabili, matyti tik nežymių naudojimo žymių. Tiks šviesiam skandinaviško stiliaus interjerui.',
+    title: 'Naudota ąžuolinė valgomojo kėdė',
+    description: 'Tvirta natūralaus medžio valgomojo kėdė. Medinis paviršius atrodo prižiūrėtas, o konstrukcija – nepažeista. Matyti tik nežymių naudojimo žymių.',
     category: 'Baldai',
     condition: 'Kaip naujas',
     price: 68,
@@ -62,8 +62,8 @@ const SAMPLE_LISTINGS: Listing[] = [
   {
     id: 'sample-backpack',
     imageUrl: '/demo-backpack.jpg',
-    title: 'Raudona žygių kuprinė, 30 l',
-    description: 'Patogi 30 litrų žygių kuprinė su reguliuojamais pečių diržais ir keliomis kišenėmis. Audinys švarus, užtrauktukai veikia. Tinka dienos žygiams ir trumpoms kelionėms.',
+    title: 'Naudota raudona 30 l žygių kuprinė',
+    description: 'Raudona 30 litrų žygių kuprinė su reguliuojamais pečių diržais ir keliomis kišenėmis. Audinys atrodo švarus, matomų pažeidimų nėra. Tinka dienos žygiams ir trumpoms kelionėms.',
     category: 'Sportas',
     condition: 'Geras',
     price: 32,

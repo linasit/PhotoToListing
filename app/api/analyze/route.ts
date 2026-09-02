@@ -12,11 +12,12 @@ Iš vienos nuotraukos atpažink PAGRINDINĘ parduodamą prekę ir parenk skelbim
 Atpažinimo taisyklės:
 - Vertink pačią nuotrauką, o ne failo pavadinimą. Nekreipk dėmesio į foną, stalą, grindis, pakuotę ar žmogų, jeigu tai nėra parduodama prekė.
 - Nurodyk konkretų daikto tipą. Nevartok bendrinių pakaitalų „daiktas“, „prekė“ ar „gaminys“, jeigu objektą galima atpažinti konkrečiau.
-- Gamintoją, modelį, medžiagą, matmenis, talpą ar technines savybes minėk tik tada, kai tai aiškiai matoma nuotraukoje. Nieko neišgalvok.
+- Gamintoją ir modelį įrašyk į pavadinimą tik tada, kai juos galima patikimai nustatyti iš aiškiai matomo logotipo, užrašo ar išskirtinių gaminio požymių. Išsaugok tikslią oficialią rašybą, pavyzdžiui: Apple, MacBook, iPhone, PlayStation ar Samsung Galaxy. Nieko neišgalvok.
+- Medžiagą, matmenis, talpą ar technines savybes minėk tik tada, kai tai aiškiai matoma nuotraukoje.
 - Iš nuotraukos negalima patvirtinti, kad elektronika veikia, todėl to neteik kaip fakto.
 
 Laukų taisyklės:
-- title: konkretus, paieškai tinkamas lietuviškas pavadinimas iki 70 simbolių. Rašyk natūralia vardininko forma, be kainos, būklės ir reklaminio šūkio.
+- title: konkretus, paieškai tinkamas lietuviškas pavadinimas iki 70 simbolių. Pradėk tinkamai su pagrindiniu daiktavardžiu suderintu būklės žodžiu „Naudotas“, „Naudota“, „Naudoti“, „Naudotos“, „Naujas“, „Nauja“, „Nauji“ arba „Naujos“. Toliau, jei patikimai atpažinta, įrašyk gamintoją ir modelį, o pabaigoje – konkretų daikto tipą lietuviškai. Pavyzdžiai: „Naudotas Apple MacBook nešiojamasis kompiuteris“, „Naudota raudona žygių kuprinė“, „Nauji Nike sportiniai bateliai“. Nevartok kainos ar reklaminio šūkio. Didžiąja raide rašyk tik pirmąjį žodį ir tikrinius pavadinimus.
 - description: 2–4 pilni, sklandūs sakiniai. Tiksliai įvardyk prekę, aprašyk matomas savybes ir būklę, o neaiškius dalykus suformuluok atsargiai.
 - category: pasirink tik vieną pateiktą kategoriją, labiausiai tinkančią pagrindinei prekei.
 - condition: spręsk tik pagal matomą kosmetinę būklę. Jei nuotraukos nepakanka, rinkis atsargesnį įvertinimą.
@@ -63,6 +64,8 @@ Taisyk tik pateikto skelbimo pavadinimo, aprašymo ir kainos paaiškinimo kalbą
 - Ištaisyk visas rašybos, gramatikos, linksniavimo, derinimo, skyrybos ir stiliaus klaidas.
 - Išlaikyk tą pačią atpažintą prekę ir visas faktines detales. Nepridėk naujų savybių, matmenų, prekės ženklo ar modelio.
 - Pavadinimas turi būti natūrali lietuviška daiktavardinė frazė vardininko linksniu, be taško pabaigoje.
+- Pavadinimo pradžioje palik arba įrašyk su pagrindiniu daiktavardžiu gramatiškai suderintą būklės žodį „Naudotas“, „Naudota“, „Naudoti“, „Naudotos“, „Naujas“, „Nauja“, „Nauji“ arba „Naujos“. Po jo pateik tiksliai parašytą prekės ženklą ir modelį, jei jie jau atpažinti, bei konkretų daikto tipą lietuviškai. Pavyzdys: „Naudotas Apple MacBook nešiojamasis kompiuteris“, ne „Naudotas Macbook Kompiuteris“.
+- Nevartok antraštinio anglų kalbos stiliaus: bendrinius lietuviškus žodžius pavadinime rašyk mažąja raide.
 - Aprašymas turi būti 2–4 aiškūs, natūralūs ir tarpusavyje derantys sakiniai.
 - Kainos paaiškinimas turi būti vienas trumpas, taisyklingas sakinys.
 - Pašalink pažodinius vertinius, anglicizmus, nereikalingą reklaminį toną ir nenatūralias konstrukcijas. Dėvėjimą vadink „naudojimo žymėmis“, „nusidėvėjimu“ arba konkrečiais matomais pažeidimais, o ne „naudojimo ženklais“.
@@ -107,12 +110,17 @@ function isValidDraft(value: unknown): value is ListingDraft {
   const hasGenericTitle = /^(?:tvarkingas|geras|naudotas|parduodamas)?\s*(?:daiktas|prekė|gaminys)$/i.test(
     draft.title?.trim() ?? '',
   );
+  const hasMatchingConditionWord =
+    draft.condition === 'Naujas'
+      ? /^Nauj(?:as|a|i|os)\b/.test(draft.title?.trim() ?? '')
+      : /^Naudot(?:as|a|i|os)\b/.test(draft.title?.trim() ?? '');
   const hasFieldLabels = /(?:^|\s)(?:title|description|category|condition|price)\s*:/i.test(combinedText);
   return (
     typeof draft.title === 'string' &&
     draft.title.trim().length >= 3 &&
     draft.title.trim().length <= 70 &&
     !hasGenericTitle &&
+    hasMatchingConditionWord &&
     typeof draft.description === 'string' &&
     draft.description.trim().length >= 40 &&
     draft.description.trim().length <= 1000 &&
@@ -132,12 +140,22 @@ function isValidDraft(value: unknown): value is ListingDraft {
   );
 }
 
+function normalizeBrandCapitalization(text: string) {
+  return text
+    .replace(/\bmacbook\b/gi, 'MacBook')
+    .replace(/\biphone\b/gi, 'iPhone')
+    .replace(/\bipad\b/gi, 'iPad')
+    .replace(/\bairpods\b/gi, 'AirPods')
+    .replace(/\bplaystation\b/gi, 'PlayStation')
+    .replace(/\bthinkpad\b/gi, 'ThinkPad');
+}
+
 function normalizeDraft(draft: ListingDraft): ListingDraft {
   return {
     ...draft,
-    title: draft.title.trim().replace(/\s+/g, ' ').replace(/[.!?]+$/, ''),
-    description: draft.description.trim().replace(/\s+/g, ' '),
-    price_reasoning: draft.price_reasoning.trim().replace(/\s+/g, ' '),
+    title: normalizeBrandCapitalization(draft.title.trim().replace(/\s+/g, ' ').replace(/[.!?]+$/, '')),
+    description: normalizeBrandCapitalization(draft.description.trim().replace(/\s+/g, ' ')),
+    price_reasoning: normalizeBrandCapitalization(draft.price_reasoning.trim().replace(/\s+/g, ' ')),
     suggested_price: Math.round(draft.suggested_price * 100) / 100,
   };
 }
