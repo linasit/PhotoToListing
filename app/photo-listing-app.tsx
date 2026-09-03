@@ -507,8 +507,7 @@ export function PhotoListingApp() {
                     ref={inputRef}
                     className="sr-only"
                     type="file"
-                    accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-                    capture="environment"
+                    accept="image/*"
                     onChange={(event) => {
                       const chosen = event.target.files?.[0];
                       if (chosen) void analyzePhoto(chosen);
