@@ -594,42 +594,57 @@ export function PhotoListingApp() {
               ) : (
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {visibleListings.map((listing) => (
-                    <button
+                    <article
                       key={listing.id}
-                      type="button"
-                      onClick={() => openDetail(listing)}
-                      className="group overflow-hidden rounded-[22px] border border-[#d5d0c4] bg-card text-left shadow-[0_4px_18px_rgba(55,49,36,0.05)] transition hover:-translate-y-1 hover:shadow-[0_14px_35px_rgba(55,49,36,0.12)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/25"
+                      className="group relative overflow-hidden rounded-[22px] border border-[#d5d0c4] bg-card text-left shadow-[0_4px_18px_rgba(55,49,36,0.05)] transition hover:-translate-y-1 hover:shadow-[0_14px_35px_rgba(55,49,36,0.12)]"
                     >
-                      <div className="aspect-[4/3] overflow-hidden bg-secondary">
-                        <img
-                          src={listing.imageUrl}
-                          alt={listing.title}
-                          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                        />
-                      </div>
-                      <div className="p-5">
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <Badge
-                            variant="secondary"
-                            className="bg-[#e5efdc] text-[#285d36]"
-                          >
-                            {listing.category}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {relativeTime(
-                              listing.createdAt,
-                              currentTime ?? undefined,
-                            )}
-                          </span>
+                      <button
+                        type="button"
+                        onClick={() => openDetail(listing)}
+                        className="block w-full text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-primary/25"
+                        aria-label={listing.title}
+                      >
+                        <div className="aspect-[4/3] overflow-hidden bg-secondary">
+                          <img
+                            src={listing.imageUrl}
+                            alt={listing.title}
+                            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                          />
                         </div>
-                        <h3 className="line-clamp-2 min-h-[3rem] text-lg font-bold leading-6 tracking-[-0.025em]">
-                          {listing.title}
-                        </h3>
-                        <p className="mt-3 text-2xl font-[760] tracking-[-0.04em]">
-                          {formatPrice(listing.price)}
-                        </p>
-                      </div>
-                    </button>
+                        <div className="p-5">
+                          <div className="mb-3 flex items-center justify-between gap-3">
+                            <Badge
+                              variant="secondary"
+                              className="bg-[#e5efdc] text-[#285d36]"
+                            >
+                              {listing.category}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {relativeTime(
+                                listing.createdAt,
+                                currentTime ?? undefined,
+                              )}
+                            </span>
+                          </div>
+                          <h3 className="line-clamp-2 min-h-[3rem] text-lg font-bold leading-6 tracking-[-0.025em]">
+                            {listing.title}
+                          </h3>
+                          <p className="mt-3 text-2xl font-[760] tracking-[-0.04em]">
+                            {formatPrice(listing.price)}
+                          </p>
+                        </div>
+                      </button>
+                      {editTokens[listing.id] && (
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          className="absolute right-3 top-3 z-10 min-h-11 rounded-full border border-white/70 bg-card/95 px-4 font-semibold shadow-lg backdrop-blur hover:bg-card"
+                          onClick={() => editListing(listing)}
+                        >
+                          <Pencil className="size-4" /> {copy.edit_listing}
+                        </Button>
+                      )}
+                    </article>
                   ))}
                 </div>
               )}
