@@ -1,8 +1,6 @@
-import { env } from 'cloudflare:workers';
+import { del, put } from '@vercel/blob';
 import { getListings, insertListing } from '@/lib/listing-store';
 import { CATEGORIES, CONDITIONS, type Category, type Condition, type Listing } from '@/lib/listings';
-
-export const runtime = 'edge';
 
 const MIME_EXTENSIONS: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -11,6 +9,11 @@ const MIME_EXTENSIONS: Record<string, string> = {
   'image/heic': 'heic',
   'image/heif': 'heif',
 };
+
+function formText(formData: FormData, name: string) {
+  const value = formData.get(name);
+  return typeof value === 'string' ? value.trim() : '';
+}
 
 export async function GET() {
   try {
@@ -22,14 +25,21 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return Response.json(
+      { error: 'Nuotraukų saugykla dar neprijungta.' },
+      { status: 503 },
+    );
+  }
+
   const formData = await request.formData();
   const image = formData.get('image');
-  const title = String(formData.get('title') ?? '').trim();
-  const description = String(formData.get('description') ?? '').trim();
-  const category = String(formData.get('category') ?? '') as Category;
-  const condition = String(formData.get('condition') ?? '') as Condition;
-  const price = Number(formData.get('price'));
-  const aiDraft = String(formData.get('aiDraft') ?? '') || null;
+  const title = formText(formData, 'title');
+  const description = formText(formData, 'description');
+  const category = formText(formData, 'category') as Category;
+  const condition = formText(formData, 'condition') as Condition;
+  const price = Number(formText(formData, 'price'));
+  const aiDraft = formText(formData, 'aiDraft') || null;
 
   if (!(image instanceof File)) return Response.json({ error: 'Trūksta nuotraukos.' }, { status: 400 });
   if (!MIME_EXTENSIONS[image.type] || image.size > 10 * 1024 * 1024) {
@@ -44,26 +54,32 @@ export async function POST(request: Request) {
 
   const id = crypto.randomUUID();
   const key = `listings/${id}.${MIME_EXTENSIONS[image.type]}`;
-  const listing: Listing = {
-    id,
-    imageUrl: `/api/images/${key}`,
-    title,
-    description,
-    category,
-    condition,
-    price: Math.round(price * 100) / 100,
-    createdAt: new Date().toISOString(),
-  };
-
-  await env.FILES.put(key, await image.arrayBuffer(), {
-    httpMetadata: { contentType: image.type, cacheControl: 'public, max-age=31536000, immutable' },
-  });
+  let uploadedImageUrl: string | null = null;
 
   try {
+    const imageBlob = await put(key, image, {
+      access: 'public',
+      addRandomSuffix: false,
+      contentType: image.type,
+      cacheControlMaxAge: 31_536_000,
+    });
+    uploadedImageUrl = imageBlob.url;
+
+    const listing: Listing = {
+      id,
+      imageUrl: imageBlob.url,
+      title,
+      description,
+      category,
+      condition,
+      price: Math.round(price * 100) / 100,
+      createdAt: new Date().toISOString(),
+    };
+
     await insertListing({ ...listing, aiDraft });
     return Response.json(listing, { status: 201 });
   } catch (error) {
-    await env.FILES.delete(key);
+    if (uploadedImageUrl) await del(uploadedImageUrl).catch(() => undefined);
     console.error('Publish route failed', error);
     return Response.json({ error: 'Nepavyko paskelbti skelbimo.' }, { status: 500 });
   }

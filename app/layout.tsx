@@ -5,7 +5,7 @@ import './globals.css';
 const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://nuotrauka-i-skelbima.linasitgroup.chatgpt.site'),
+  metadataBase: new URL('https://photo-to-listing.vercel.app'),
   title: 'Paversk nuotrauką į skelbimą',
   description: 'Iš nuotraukos sukurkite taisyklingą lietuvišką skelbimą su pavadinimu, aprašymu, kategorija ir siūloma kaina.',
   openGraph: {

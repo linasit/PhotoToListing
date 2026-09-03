@@ -1,94 +1,42 @@
-import { env } from 'cloudflare:workers';
-import type { Category, Condition, Listing } from '@/lib/listings';
+import { list, put } from '@vercel/blob';
+import type { Listing } from '@/lib/listings';
 
-type ListingRow = {
-  id: string;
-  image_url: string;
-  title: string;
-  description: string;
-  category: Category;
-  condition: Condition;
-  price: number;
-  created_at: string;
-};
+const RECORDS_PREFIX = 'listing-records/';
 
-let schemaReady = false;
+type StoredListing = Listing & { aiDraft: string | null };
 
-async function ensureSchema() {
-  if (schemaReady) return;
-  const db = env.DB;
-  await db.batch([
-    db.prepare(`CREATE TABLE IF NOT EXISTS listings (
-      id TEXT PRIMARY KEY,
-      image_url TEXT NOT NULL,
-      title TEXT NOT NULL CHECK (length(title) <= 70),
-      description TEXT NOT NULL CHECK (length(description) <= 1000),
-      category TEXT NOT NULL,
-      condition TEXT NOT NULL,
-      price REAL NOT NULL CHECK (price > 0),
-      ai_draft TEXT,
-      status TEXT NOT NULL DEFAULT 'published',
-      created_at TEXT NOT NULL
-    )`),
-    db.prepare('CREATE INDEX IF NOT EXISTS idx_listings_created_at ON listings(created_at DESC)'),
-    db.prepare('PRAGMA optimize'),
-  ]);
-  schemaReady = true;
+function storageReady() {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 }
 
-function fromRow(row: ListingRow): Listing {
-  return {
-    id: row.id,
-    imageUrl: row.image_url,
-    title: row.title,
-    description: row.description,
-    category: row.category,
-    condition: row.condition,
-    price: Number(row.price),
-    createdAt: row.created_at,
-  };
+async function readListing(url: string): Promise<StoredListing | null> {
+  const response = await fetch(url, { cache: 'no-store' });
+  if (!response.ok) return null;
+  return (await response.json()) as StoredListing;
 }
 
 export async function getListings(limit = 48): Promise<Listing[]> {
-  await ensureSchema();
-  const result = await env.DB.prepare(
-    `SELECT id, image_url, title, description, category, condition, price, created_at
-     FROM listings WHERE status = 'published' ORDER BY created_at DESC LIMIT ?`,
-  )
-    .bind(limit)
-    .all<ListingRow>();
-  return result.results.map(fromRow);
+  if (!storageReady()) return [];
+  const { blobs } = await list({ prefix: RECORDS_PREFIX, limit: 1000 });
+  const records = await Promise.all(blobs.map((blob) => readListing(blob.url)));
+  return records
+    .filter((record): record is StoredListing => record !== null)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, limit);
 }
 
 export async function getListing(id: string): Promise<Listing | null> {
-  await ensureSchema();
-  const row = await env.DB.prepare(
-    `SELECT id, image_url, title, description, category, condition, price, created_at
-     FROM listings WHERE id = ? AND status = 'published' LIMIT 1`,
-  )
-    .bind(id)
-    .first<ListingRow>();
-  return row ? fromRow(row) : null;
+  if (!storageReady()) return null;
+  const { blobs } = await list({ prefix: `${RECORDS_PREFIX}${id}.json`, limit: 1 });
+  return blobs[0] ? readListing(blobs[0].url) : null;
 }
 
 export async function insertListing(input: Listing & { aiDraft: string | null }) {
-  await ensureSchema();
-  await env.DB.prepare(
-    `INSERT INTO listings
-      (id, image_url, title, description, category, condition, price, ai_draft, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'published', ?)`,
-  )
-    .bind(
-      input.id,
-      input.imageUrl,
-      input.title,
-      input.description,
-      input.category,
-      input.condition,
-      input.price,
-      input.aiDraft,
-      input.createdAt,
-    )
-    .run();
+  await put(`${RECORDS_PREFIX}${input.id}.json`, JSON.stringify(input), {
+    access: 'public',
+    addRandomSuffix: false,
+    contentType: 'application/json',
+    cacheControlMaxAge: 60,
+  });
   return input;
 }

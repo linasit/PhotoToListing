@@ -1,7 +1,4 @@
-import { env } from 'cloudflare:workers';
 import { CATEGORIES, CONDITIONS, type ListingDraft } from '@/lib/listings';
-
-export const runtime = 'edge';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -168,7 +165,7 @@ async function requestDraft(file: File, attempt: number): Promise<ListingDraft> 
     const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -213,7 +210,7 @@ async function proofreadDraft(draft: ListingDraft): Promise<ListingDraft> {
     const response = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -255,7 +252,7 @@ export async function POST(request: Request) {
     if (file.size > MAX_FILE_SIZE) return Response.json({ error: 'Failas per didelis.' }, { status: 413 });
     if (!ALLOWED_TYPES.includes(file.type)) return Response.json({ error: 'Nepalaikomas failo formatas.' }, { status: 415 });
 
-    if (!env.OPENAI_API_KEY) {
+    if (!process.env.OPENAI_API_KEY) {
       return Response.json(
         {
           code: 'AI_NOT_CONFIGURED',
