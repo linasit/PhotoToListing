@@ -6,8 +6,11 @@
   <rect x="810" y="430" width="160" height="18" rx="9" fill="#d63f1e" opacity="0.85" transform="rotate(5 925 340)"/>
   <rect x="810" y="466" width="220" height="12" rx="6" fill="#20241d" opacity="0.22" transform="rotate(5 925 340)"/>
   <circle cx="92" cy="92" r="32" fill="#d63f1e"/>
-  <text x="142" y="105" fill="#20241d" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Nuotrauka į skelbimą</text>
-  <text x="80" y="282" fill="#20241d" font-family="Arial, Helvetica, sans-serif" font-size="78" font-weight="800" letter-spacing="-4">Nufotografuokite.</text>
-  <text x="80" y="370" fill="#d63f1e" font-family="Arial, Helvetica, sans-serif" font-size="78" font-weight="800" letter-spacing="-4">Parduokite.</text>
-  <text x="84" y="440" fill="#68685f" font-family="Arial, Helvetica, sans-serif" font-size="29">Lietuviškas skelbimas per kelias sekundes.</text>
+  <path d="M76 87h6l4-6h12l4 6h6v15H76z" fill="none" stroke="#fffdf8" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="92" cy="94" r="5" fill="none" stroke="#fffdf8" stroke-width="4"/>
+  <text x="142" y="105" fill="#20241d" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">Paversk nuotrauką į skelbimą</text>
+  <text x="80" y="270" fill="#20241d" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800" letter-spacing="-3">Nufotografuokite arba</text>
+  <text x="80" y="346" fill="#20241d" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800" letter-spacing="-3">įkelkite nuotrauką.</text>
+  <text x="80" y="422" fill="#d63f1e" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800" letter-spacing="-3">Ir parduokite.</text>
+  <text x="84" y="486" fill="#68685f" font-family="Arial, Helvetica, sans-serif" font-size="28">Taisyklingas skelbimas per kelias sekundes.</text>
 </svg>

@@ -38,39 +38,6 @@ type Stage = 'home' | 'analyzing' | 'edit' | 'detail';
 type EditableDraft = Omit<ListingDraft, 'suggested_price'> & { price: string };
 type AnalysisError = { error?: string };
 
-const SAMPLE_LISTINGS: Listing[] = [
-  {
-    id: 'sample-camera',
-    imageUrl: '/demo-camera.jpg',
-    title: 'Naudotas vintažinis momentinis fotoaparatas',
-    description: 'Klasikinio dizaino momentinis fotoaparatas. Ant korpuso matyti nedidelių naudojimo žymių, tačiau išoriškai jis atrodo geros būklės. Prieš perkant rekomenduojama patikrinti veikimą ir komplektaciją.',
-    category: 'Elektronika',
-    condition: 'Geras',
-    price: 45,
-    createdAt: '2026-09-02T21:45:00.000Z',
-  },
-  {
-    id: 'sample-chair',
-    imageUrl: '/demo-chair.jpg',
-    title: 'Naudota ąžuolinė valgomojo kėdė',
-    description: 'Tvirta natūralaus medžio valgomojo kėdė. Medinis paviršius atrodo prižiūrėtas, o konstrukcija – nepažeista. Matyti tik nežymių naudojimo žymių.',
-    category: 'Baldai',
-    condition: 'Kaip naujas',
-    price: 68,
-    createdAt: '2026-09-02T21:31:00.000Z',
-  },
-  {
-    id: 'sample-backpack',
-    imageUrl: '/demo-backpack.jpg',
-    title: 'Naudota raudona 30 l žygių kuprinė',
-    description: 'Raudona 30 litrų žygių kuprinė su reguliuojamais pečių diržais ir keliomis kišenėmis. Audinys atrodo švarus, matomų pažeidimų nėra. Tinka dienos žygiams ir trumpoms kelionėms.',
-    category: 'Sportas',
-    condition: 'Geras',
-    price: 32,
-    createdAt: '2026-09-01T16:20:00.000Z',
-  },
-];
-
 const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 const imageTypesByExtension: Record<string, string> = {
@@ -170,10 +137,7 @@ export function PhotoListingApp() {
     };
   }, [previewUrl]);
 
-  const allListings = useMemo(
-    () => [...published, ...SAMPLE_LISTINGS.filter((sample) => !published.some((item) => item.id === sample.id))],
-    [published],
-  );
+  const allListings = published;
 
   const visibleListings = useMemo(
     () => (activeCategory === 'Visi' ? allListings : allListings.filter((item) => item.category === activeCategory)),

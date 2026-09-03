@@ -6,19 +6,19 @@ const geist = Geist({ variable: '--font-geist', subsets: ['latin'] });
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://nuotrauka-i-skelbima.linasitgroup.chatgpt.site'),
-  title: 'Nuotrauka į skelbimą',
-  description: 'Paverskite daikto nuotrauką paruoštu lietuvišku skelbimu per kelias sekundes.',
+  title: 'Paversk nuotrauką į skelbimą',
+  description: 'Iš nuotraukos sukurkite taisyklingą lietuvišką skelbimą su pavadinimu, aprašymu, kategorija ir siūloma kaina.',
   openGraph: {
-    title: 'Nuotrauka į skelbimą',
-    description: 'Nufotografuokite daiktą, paredaguokite DI parengtą skelbimą ir iškart jį paskelbkite.',
+    title: 'Paversk nuotrauką į skelbimą',
+    description: 'Įkelkite prekės nuotrauką, peržiūrėkite DI parengtą skelbimą ir paskelbkite jį.',
     locale: 'lt_LT',
     type: 'website',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Nuotrauka į skelbimą' }],
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Paversk nuotrauką į skelbimą' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Nuotrauka į skelbimą',
-    description: 'Lietuviškas skelbimas iš vienos nuotraukos per kelias sekundes.',
+    title: 'Paversk nuotrauką į skelbimą',
+    description: 'Iš nuotraukos sukurkite taisyklingą lietuvišką skelbimą per kelias sekundes.',
     images: ['/og.png'],
   },
 };
