@@ -41,9 +41,6 @@ import {
 type Stage = 'home' | 'analyzing' | 'edit' | 'detail';
 type EditableDraft = Omit<ListingDraft, 'suggested_price'> & { price: string };
 type AnalysisError = { error?: string };
-type PublishResponse = Listing & { editToken?: string };
-
-const EDIT_TOKENS_STORAGE_KEY = 'photo-to-listing:edit-tokens';
 
 const allowedTypes = [
   'image/jpeg',
@@ -151,7 +148,6 @@ export function PhotoListingApp() {
   const [isDragActive, setIsDragActive] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [editingListingId, setEditingListingId] = useState<string | null>(null);
-  const [editTokens, setEditTokens] = useState<Record<string, string>>({});
   const [currentTime, setCurrentTime] = useState<number | null>(null);
   const [message, setMessage] = useState<{
     tone: 'success' | 'error';
@@ -165,18 +161,6 @@ export function PhotoListingApp() {
         setPublished((payload as { listings?: Listing[] }).listings ?? []),
       )
       .catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
-    let storedTokens: Record<string, string> = {};
-    try {
-      const stored = window.localStorage.getItem(EDIT_TOKENS_STORAGE_KEY);
-      if (stored) storedTokens = JSON.parse(stored) as Record<string, string>;
-    } catch {
-      window.localStorage.removeItem(EDIT_TOKENS_STORAGE_KEY);
-    }
-    const timeout = window.setTimeout(() => setEditTokens(storedTokens), 0);
-    return () => window.clearTimeout(timeout);
   }, []);
 
   useEffect(() => {
@@ -292,26 +276,7 @@ export function PhotoListingApp() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function rememberEditToken(id: string, editToken: string) {
-    setEditTokens((current) => {
-      const next = { ...current, [id]: editToken };
-      try {
-        window.localStorage.setItem(
-          EDIT_TOKENS_STORAGE_KEY,
-          JSON.stringify(next),
-        );
-      } catch {
-        // Keep the token for this session even when browser storage is unavailable.
-      }
-      return next;
-    });
-  }
-
   function editListing(listing: Listing) {
-    if (!editTokens[listing.id]) {
-      showMessage('error', copy.error_edit_permission);
-      return;
-    }
     setEditingListingId(listing.id);
     setDraft(null);
     setFile(null);
@@ -338,8 +303,6 @@ export function PhotoListingApp() {
       return showMessage('error', copy.error_description);
     if (!Number.isFinite(Number(form.price)) || Number(form.price) <= 0)
       return showMessage('error', copy.error_price);
-    if (editingListingId && !editTokens[editingListingId])
-      return showMessage('error', copy.error_edit_permission);
 
     setIsPublishing(true);
     try {
@@ -349,7 +312,6 @@ export function PhotoListingApp() {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
-            'x-edit-token': editTokens[editingListingId],
           },
           body: JSON.stringify({
             title: form.title.trim(),
@@ -371,9 +333,8 @@ export function PhotoListingApp() {
         response = await fetch('/api/listings', { method: 'POST', body });
       }
 
-      const payload = (await response
-        .json()
-        .catch(() => ({}))) as PublishResponse & AnalysisError;
+      const payload = (await response.json().catch(() => ({}))) as Listing &
+        AnalysisError;
       if (!response.ok) throw new Error(payload.error || copy.error_generic);
       const listing = payload as Listing;
       if (editingListingId) {
@@ -382,7 +343,6 @@ export function PhotoListingApp() {
         );
       } else {
         setPublished((current) => [listing, ...current]);
-        if (payload.editToken) rememberEditToken(listing.id, payload.editToken);
       }
       const wasEditing = Boolean(editingListingId);
       setStage('home');
@@ -634,16 +594,14 @@ export function PhotoListingApp() {
                           </p>
                         </div>
                       </button>
-                      {editTokens[listing.id] && (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          className="absolute right-3 top-3 z-10 min-h-11 rounded-full border border-white/70 bg-card/95 px-4 font-semibold shadow-lg backdrop-blur hover:bg-card"
-                          onClick={() => editListing(listing)}
-                        >
-                          <Pencil className="size-4" /> {copy.edit_listing}
-                        </Button>
-                      )}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="absolute right-3 top-3 z-10 min-h-11 rounded-full border border-white/70 bg-card/95 px-4 font-semibold shadow-lg backdrop-blur hover:bg-card"
+                        onClick={() => editListing(listing)}
+                      >
+                        <Pencil className="size-4" /> {copy.edit_listing}
+                      </Button>
                     </article>
                   ))}
                 </div>
@@ -957,16 +915,14 @@ export function PhotoListingApp() {
               <p className="mt-3 text-base leading-7 text-foreground/85">
                 {selectedListing.description}
               </p>
-              {editTokens[selectedListing.id] && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="mt-7 min-h-12 rounded-full"
-                  onClick={() => editListing(selectedListing)}
-                >
-                  <Pencil className="size-4" /> {copy.edit_listing}
-                </Button>
-              )}
+              <Button
+                type="button"
+                variant="outline"
+                className="mt-7 min-h-12 rounded-full"
+                onClick={() => editListing(selectedListing)}
+              >
+                <Pencil className="size-4" /> {copy.edit_listing}
+              </Button>
               <div className="mt-auto pt-8 text-sm text-muted-foreground">
                 {copy.listed} ·{' '}
                 {relativeTime(

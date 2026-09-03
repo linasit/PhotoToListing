@@ -57,6 +57,5 @@
   "error_description": "Įrašykite aprašymą (iki 1000 simbolių).",
   "error_price": "Įrašykite kainą, didesnę už 0.",
   "published_success": "Pakoreguotas skelbimas paskelbtas bendrame sraute!",
-  "updated_success": "Skelbimo pakeitimai išsaugoti bendrame sraute!",
-  "error_edit_permission": "Šį skelbimą galima redaguoti tik naršyklėje, kurioje jis buvo paskelbtas."
+  "updated_success": "Skelbimo pakeitimai išsaugoti bendrame sraute!"
 }

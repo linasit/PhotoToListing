@@ -14,8 +14,7 @@ type ListingUpdate = Pick<
 
 export type UpdateListingResult =
   | { status: 'updated'; listing: Listing }
-  | { status: 'not_found' }
-  | { status: 'forbidden' };
+  | { status: 'not_found' };
 
 function storageReady() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
@@ -67,32 +66,22 @@ export async function getListing(id: string): Promise<Listing | null> {
   return listing ? toPublicListing(listing) : null;
 }
 
-export async function insertListing(
-  input: StoredListing,
-  editTokenHash: string,
-) {
-  await put(
-    `${RECORDS_PREFIX}${input.id}.json`,
-    JSON.stringify({ ...input, editTokenHash }),
-    {
-      access: 'public',
-      addRandomSuffix: false,
-      contentType: 'application/json',
-      cacheControlMaxAge: 60,
-    },
-  );
+export async function insertListing(input: StoredListing) {
+  await put(`${RECORDS_PREFIX}${input.id}.json`, JSON.stringify(input), {
+    access: 'public',
+    addRandomSuffix: false,
+    contentType: 'application/json',
+    cacheControlMaxAge: 60,
+  });
   return input;
 }
 
 export async function updateListing(
   id: string,
   input: ListingUpdate,
-  editTokenHash: string,
 ): Promise<UpdateListingResult> {
   const current = await getStoredListing(id);
   if (!current) return { status: 'not_found' };
-  if (!current.editTokenHash || current.editTokenHash !== editTokenHash)
-    return { status: 'forbidden' };
 
   const updated: EditableStoredListing = { ...current, ...input };
   await put(`${RECORDS_PREFIX}${id}.json`, JSON.stringify(updated), {

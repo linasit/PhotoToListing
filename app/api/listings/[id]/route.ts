@@ -14,14 +14,6 @@ type UpdatePayload = {
   price?: unknown;
 };
 
-async function hashEditToken(token: string) {
-  const bytes = new TextEncoder().encode(token);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, '0'),
-  ).join('');
-}
-
 export async function GET(
   _request: Request,
   context: { params: Promise<{ id: string }> },
@@ -43,13 +35,6 @@ export async function PATCH(
       { status: 503 },
     );
   }
-
-  const editToken = request.headers.get('x-edit-token')?.trim();
-  if (!editToken)
-    return Response.json(
-      { error: 'Neturite leidimo redaguoti šio skelbimo.' },
-      { status: 401 },
-    );
 
   const payload = (await request
     .json()
@@ -83,26 +68,16 @@ export async function PATCH(
 
   const { id } = await context.params;
   try {
-    const result = await updateListing(
-      id,
-      {
-        title,
-        description,
-        category,
-        condition,
-        price: Math.round(price * 100) / 100,
-      },
-      await hashEditToken(editToken),
-    );
+    const result = await updateListing(id, {
+      title,
+      description,
+      category,
+      condition,
+      price: Math.round(price * 100) / 100,
+    });
 
     if (result.status === 'not_found')
       return Response.json({ error: 'Skelbimas nerastas.' }, { status: 404 });
-    if (result.status === 'forbidden') {
-      return Response.json(
-        { error: 'Neturite leidimo redaguoti šio skelbimo.' },
-        { status: 403 },
-      );
-    }
     return Response.json(result.listing);
   } catch (error) {
     console.error('Edit route failed', error);

@@ -21,14 +21,6 @@ function formText(formData: FormData, name: string) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-async function hashEditToken(token: string) {
-  const bytes = new TextEncoder().encode(token);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest), (byte) =>
-    byte.toString(16).padStart(2, '0'),
-  ).join('');
-}
-
 export async function GET() {
   try {
     return Response.json({ listings: await getListings() });
@@ -110,12 +102,8 @@ export async function POST(request: Request) {
       createdAt: new Date().toISOString(),
     };
 
-    const editToken = `${crypto.randomUUID()}${crypto.randomUUID()}`;
-    await insertListing(
-      { ...listing, aiDraft },
-      await hashEditToken(editToken),
-    );
-    return Response.json({ ...listing, editToken }, { status: 201 });
+    await insertListing({ ...listing, aiDraft });
+    return Response.json(listing, { status: 201 });
   } catch (error) {
     if (uploadedImageUrl) await del(uploadedImageUrl).catch(() => undefined);
     console.error('Publish route failed', error);

@@ -9,7 +9,7 @@ Live app: [photo-to-listing.vercel.app](https://photo-to-listing.vercel.app/)
 - AI image analysis and Lithuanian listing copy
 - Editable title, description, category, condition, and price
 - Shared public listing feed
-- Secure editing for listings created in the same browser
+- Editing for every listing on mobile and desktop
 - JPG, PNG, WebP, and HEIC upload support
 - Responsive Next.js interface
 
@@ -88,19 +88,17 @@ npx vercel --prod
 
 ## Useful commands
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Start the development server |
-| `npm run build` | Create a production build |
-| `npm run start` | Run the production build |
-| `npm run lint` | Run Oxlint |
-| `npm run format` | Format the code with Oxfmt |
+| Command          | Purpose                      |
+| ---------------- | ---------------------------- |
+| `npm run dev`    | Start the development server |
+| `npm run build`  | Create a production build    |
+| `npm run start`  | Run the production build     |
+| `npm run lint`   | Run Oxlint                   |
+| `npm run format` | Format the code with Oxfmt   |
 
 ## How listing editing works
 
-When a listing is published, the API returns a one-time edit token. The browser stores that token locally, while only its SHA-256 hash is saved with the listing record. Public feed responses never expose the token or its hash. As a result, a listing can be edited only from the browser that originally published it.
-
-Listings created before secure editing was introduced do not have an edit token and cannot be edited through the current interface.
+Every listing can be edited from its feed card or detail page on mobile and desktop. Changes to the title, description, category, condition, and price are saved directly to the shared feed.
 
 ## Tech stack
 
