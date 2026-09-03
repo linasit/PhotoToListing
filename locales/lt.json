@@ -17,6 +17,9 @@
   "edit_eyebrow": "Beveik paruošta",
   "edit_title": "Peržiūrėkite ir pakoreguokite skelbimą",
   "edit_hint": "DI parengė juodraštį. Prieš paskelbdami galite pakeisti bet kurį lauką.",
+  "edit_existing_eyebrow": "Jūsų skelbimas",
+  "edit_existing_title": "Pakoreguokite paskelbtą skelbimą",
+  "edit_existing_hint": "Išsaugojus pakeitimus, atnaujinta informacija iškart bus rodoma bendrame skelbimų sraute.",
   "photo_label": "Jūsų nuotrauka",
   "title_label": "Pavadinimas",
   "description_label": "Aprašymas",
@@ -28,6 +31,10 @@
   "regenerate": "Generuoti iš naujo",
   "publish": "Paskelbti",
   "publishing": "Skelbiama…",
+  "edit_listing": "Redaguoti skelbimą",
+  "save_changes": "Išsaugoti pakeitimus",
+  "saving_changes": "Saugoma…",
+  "cancel": "Atšaukti",
   "discard": "Atmesti",
   "feed_eyebrow": "Ką parduoda kiti",
   "feed_title": "Naujausi skelbimai",
@@ -49,5 +56,7 @@
   "error_title": "Įrašykite pavadinimą (iki 70 simbolių).",
   "error_description": "Įrašykite aprašymą (iki 1000 simbolių).",
   "error_price": "Įrašykite kainą, didesnę už 0.",
-  "published_success": "Skelbimas paskelbtas!"
+  "published_success": "Pakoreguotas skelbimas paskelbtas bendrame sraute!",
+  "updated_success": "Skelbimo pakeitimai išsaugoti bendrame sraute!",
+  "error_edit_permission": "Šį skelbimą galima redaguoti tik naršyklėje, kurioje jis buvo paskelbtas."
 }
